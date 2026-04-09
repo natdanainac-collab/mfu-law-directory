@@ -278,6 +278,9 @@
       const noPubText = isEn ? 'No publications found.' : 'ไม่พบผลงานวิชาการ';
       const backText = isEn ? '← Back to Directory' : '← กลับสู่หน้าทำเนียบ';
 
+      // SEO: ให้ Googlebot และเบราว์เซอร์รู้ว่าหน้านี้คือโปรไฟล์ของใคร
+      document.title = `${title} ${dispName} | ทำเนียบผู้เชี่ยวชาญ นิติศาสตร์ MFU`;
+
       let cvHtml = '';
       if (educationText || experienceText || (cvLink && cvLink.trim() !== '')) {
           if (educationText) cvHtml += `<div class="mb-5"><h3 class="font-bold text-slate-800 text-base mb-2 flex items-center gap-2">🎓 ${eduHeader}</h3><p class="whitespace-pre-wrap text-slate-600 text-sm pl-7 leading-relaxed">${educationText}</p></div>`;
@@ -360,6 +363,8 @@
     // Closes profile and returns to Directory
     function closeStandaloneProfile() {
       updateUrlParameter(null);
+      // SEO: คืนค่าแท็บด้านบนให้กลับมาเป็นชื่อทำเนียบผู้เชี่ยวชาญ
+      document.title = 'ทำเนียบผู้เชี่ยวชาญ | นิติศาสตร์ มหาวิทยาลัยแม่ฟ้าหลวง';
       document.getElementById('profile-standalone').classList.add('hidden');
       document.getElementById('main-header').classList.remove('hidden');
       document.getElementById('main-ui').classList.remove('hidden');
@@ -392,7 +397,7 @@
             <div class="flex items-center gap-4">
               ${img}
               <div class="flex-1 min-w-0">
-                <h4 class="font-bold text-sm text-slate-900 truncate hover:text-[#b91c1c] hover:underline" onclick="event.stopPropagation(); openStandaloneProfile('${f['ชื่อ-นามสกุล']}')" title="${isEn ? 'View Full Profile' : 'ดูข้อมูลเพิ่มเติม'}">${hl(f[titleField] + " " + f[nameField], state.search)}</h4>
+                <a href="?lecturer=${encodeURIComponent(f['ชื่อ-นามสกุล'])}&lang=${state.lang}" class="font-bold text-sm text-slate-900 truncate hover:text-[#b91c1c] hover:underline block" onclick="event.preventDefault(); event.stopPropagation(); openStandaloneProfile('${f['ชื่อ-นามสกุล']}');" title="${isEn ? 'View Full Profile' : 'ดูข้อมูลเพิ่มเติม'}">${hl(f[titleField] + " " + f[nameField], state.search)}</a>
                 <p class="text-[#d97706] text-[10px] font-bold uppercase mt-1">${f[expField]}</p>
               </div>
             </div>
