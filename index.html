@@ -131,12 +131,17 @@
         renderExpMenu();
         render();
 
-        // ใช้งาน Standard Web Router
+        // ใช้งาน Standard Web Router และ Auto Translate
         const urlParams = new URLSearchParams(window.location.search);
         const targetLang = urlParams.get('lang');
+        const browserLang = navigator.language || navigator.userLanguage;
+
         if(targetLang === 'en' || targetLang === 'th') {
             state.lang = targetLang;
             toggleLang(false); // อัปเดตภาษาตาม URL โดยไม่ต้องสลับไปมา
+        } else if (browserLang && browserLang.toLowerCase().startsWith('en')) {
+            state.lang = 'en';
+            toggleLang(false); // Auto-translate to English based on browser language
         }
 
         if (urlParams.get('lecturer')) {
