@@ -22,6 +22,11 @@
 </head>
 <body class="pb-20">
 
+  <button onclick="toggleLang()" class="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-[9000] flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-full text-xs font-bold uppercase tracking-widest shadow-[0_10px_25px_rgba(0,0,0,0.25)] border border-slate-700 hover:bg-[#b91c1c] hover:border-[#b91c1c] hover:-translate-y-1 hover:shadow-red-900/30 transition-all duration-300 group">
+    <span class="text-base group-hover:rotate-12 transition-transform duration-300">🌐</span>
+    <span id="lang-btn">English</span>
+  </button>
+
   <div id="toast-box" class="fixed bottom-10 left-1/2 -translate-x-1/2 hidden z-[9999]">
     <div class="bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-bold shadow-2xl flex items-center gap-2 toast-anim">
       ✅ <span id="toast-msg">ดำเนินการสำเร็จ</span>
@@ -34,8 +39,6 @@
   </div>
 
   <header id="main-header" class="bg-slate-950 text-white py-16 md:py-20 border-b-4 border-[#b91c1c] text-center px-6 relative overflow-hidden hidden">
-    <button onclick="toggleLang()" id="lang-btn" class="absolute top-6 right-6 z-20 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition backdrop-blur-sm border border-white/10 shadow-lg">EN</button>
-    
     <div class="relative z-10 mt-4 md:mt-0">
       <h2 class="text-[#d97706] font-black tracking-widest text-xs uppercase mb-3">MFU School of Law</h2>
       <h1 class="text-3xl md:text-5xl font-black mb-8">Faculty & Research Portal</h1>
@@ -136,7 +139,7 @@
         if (targetLang === 'en' || targetLang === 'th') {
             state.lang = targetLang;
         } else if (browserLang && browserLang.toLowerCase().startsWith('en')) {
-            state.lang = 'en'; // Auto-switch to English if their device is English
+            state.lang = 'en'; 
         } else {
             state.lang = 'th';
         }
@@ -158,12 +161,23 @@
         document.getElementById('loader-text').innerHTML = `<span class="text-red-600 text-center px-4">Server Error: ${err.message}<br><br><small class="text-slate-500 font-normal">หากเพิ่งอัปเดตโค้ด กรุณาตรวจสอบให้แน่ใจว่าวาง API_URL ถูกต้อง</small></span>`; 
     }
 
+    // UPDATED FUNCTION: Now automatically refreshes the standalone profile if it's open
     function toggleLang(switchLang = true) {
       if(switchLang) state.lang = state.lang === 'th' ? 'en' : 'th';
-      document.getElementById('lang-btn').innerText = state.lang === 'th' ? 'EN' : 'TH';
+      
+      // Update Button Text
+      document.getElementById('lang-btn').innerText = state.lang === 'th' ? 'English' : 'ภาษาไทย';
+      
       updateStaticUI();
       renderExpMenu();
       render();
+
+      // If the user is currently viewing a profile, re-render it in the new language!
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentLecturer = urlParams.get('lecturer');
+      if (currentLecturer && !document.getElementById('profile-standalone').classList.contains('hidden')) {
+          openStandaloneProfile(currentLecturer);
+      }
     }
 
     function updateStaticUI() {
@@ -230,7 +244,6 @@
       const isEn = state.lang === 'en';
       const expField = isEn ? 'ความเชี่ยวชาญ (EN)' : 'ความเชี่ยวชาญ';
       
-      // Filter out empty values and sort
       const exps = [...new Set(rawData.faculty.map(f => f[expField]).filter(Boolean))].sort();
       menu.innerHTML = exps.map(e => `<button onclick="setExp('${e}')" class="exp-btn bg-white text-slate-500 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition">${e}</button>`).join('');
     }
@@ -298,14 +311,9 @@
 
       let html = `
       <div class="p-6 md:p-10 max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-6">
-            <button onclick="closeStandaloneProfile()" class="inline-block text-sm bg-slate-900 text-white px-5 py-2 rounded-lg hover:bg-slate-800 transition shadow-md">
-               ${backText}
-            </button>
-            <button onclick="toggleLang(); openStandaloneProfile('${name.replace(/'/g, "\\'")}')" class="bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 transition shadow-sm flex items-center gap-2">
-               🌐 ${state.lang === 'th' ? 'English' : 'ภาษาไทย'}
-            </button>
-        </div>
+        <button onclick="closeStandaloneProfile()" class="inline-block mb-6 text-sm bg-slate-900 text-white px-5 py-2 rounded-lg hover:bg-slate-800 transition shadow-md">
+           ${backText}
+        </button>
         
         <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row gap-8 items-center md:items-start">
           ${f['Instructor Image'] ? `<img src="${f['Instructor Image']}" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow-md border-4 border-white shrink-0">` : `<div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-300 text-4xl shadow-md border-4 border-white shrink-0">${String(dispName)[0]}</div>`}
@@ -334,7 +342,7 @@
 
       if(pubs.length > 0) {
           pubs.forEach(p => {
-              const titleStr = p[pubTitleField] || p['ชื่อเรื่อง']; // Fallback to Thai if EN is missing
+              const titleStr = p[pubTitleField] || p['ชื่อเรื่อง']; 
               const authorStr = p[authorField] || p['authorTH'];
               const citeText = `${authorStr}. (${p['ปีที่เผยแพร่']}). ${titleStr}. [${p['ประเภท']}].`;
               
@@ -426,7 +434,7 @@
       });
 
       document.getElementById('pub-list').innerHTML = filteredPub.slice(0, state.limit).map(p => {
-        const titleStr = p[pubTitleField] || p['ชื่อเรื่อง']; // Fallback to Thai if EN missing
+        const titleStr = p[pubTitleField] || p['ชื่อเรื่อง'];
         const authorStr = p[authorField] || p['authorTH'];
         const citeText = `${authorStr}. (${p['ปีที่เผยแพร่']}). ${titleStr}. [${p['ประเภท']}].`;
         const googleLink = `https://www.google.com/search?q=${encodeURIComponent(titleStr + ' ' + authorStr)}`;
