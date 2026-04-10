@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
-    body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; color: #1e293b; scroll-behavior: smooth; top: 0 !important; }
+    body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; color: #1e293b; scroll-behavior: smooth; }
     .mfu-red { color: #b91c1c; }
     .clean-card { background: white; border: 1px solid #f1f5f9; border-radius: 1rem; transition: all 0.2s ease; position: relative; }
     .clean-card:hover { border-color: #cbd5e1; box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05); }
@@ -18,15 +18,9 @@
     @keyframes slideUp { 0% { opacity: 0; transform: translate(-50%, 20px); } 100% { opacity: 1; transform: translate(-50%, 0); } }
     .toast-anim { animation: slideUp 0.3s ease-out forwards; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
-    
-    /* ซ่อนแถบ Google Translate ด้านบนที่มักจะดันหน้าเว็บลงมา */
-    .skiptranslate iframe { display: none !important; }
-    body { min-height: 100vh; }
   </style>
 </head>
 <body class="pb-20">
-
-  <div id="google_translate_element" class="fixed bottom-6 right-6 z-[9000] shadow-xl rounded-lg overflow-hidden border border-slate-200 bg-white"></div>
 
   <div id="toast-box" class="fixed bottom-10 left-1/2 -translate-x-1/2 hidden z-[9999]">
     <div class="bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-bold shadow-2xl flex items-center gap-2 toast-anim">
@@ -40,6 +34,8 @@
   </div>
 
   <header id="main-header" class="bg-slate-950 text-white py-16 md:py-20 border-b-4 border-[#b91c1c] text-center px-6 relative overflow-hidden hidden">
+    <button onclick="toggleLang()" id="lang-btn" class="absolute top-6 right-6 z-20 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition backdrop-blur-sm border border-white/10 shadow-lg">EN</button>
+    
     <div class="relative z-10 mt-4 md:mt-0">
       <h2 class="text-[#d97706] font-black tracking-widest text-xs uppercase mb-3">MFU School of Law</h2>
       <h1 class="text-3xl md:text-5xl font-black mb-8">Faculty & Research Portal</h1>
@@ -90,6 +86,12 @@
         pubHeaderAll: "ผลงานวิชาการล่าสุด", pubHeaderFac: "ผลงานโดย", resetBtn: "ดูทั้งหมด ✕", loadMore: "โหลดผลงานเพิ่มเติม ▾",
         notFoundFac: "ไม่พบรายชื่อ", notFoundPub: "ไม่พบรายการผลงาน", year: "ปี", citeLabel: "อ้างอิง (CITE)",
         exportLabel: "ส่งออก .RIS", copyEmail: "คัดลอกอีเมลแล้ว", searchMore: "สืบค้นเพิ่มเติม 🔍", fullWork: "FULL WORK ↗", copyRef: "คัดลอกแล้ว"
+      },
+      en: {
+        searchPlaceholder: "Search for faculty or publications...", filterAll: "All", facHeader: "Faculty Directory",
+        pubHeaderAll: "Latest Publications", pubHeaderFac: "Publications by", resetBtn: "View All ✕", loadMore: "Load More ▾",
+        notFoundFac: "No faculty found", notFoundPub: "No publications found", year: "Year", citeLabel: "CITE",
+        exportLabel: "EXPORT .RIS", copyEmail: "Email copied", searchMore: "Search 🔍", fullWork: "FULL WORK ↗", copyRef: "Copied"
       }
     };
 
@@ -126,11 +128,22 @@
         document.getElementById('main-header').classList.remove('hidden');
         document.getElementById('main-ui').classList.remove('hidden');
         
-        updateStaticUI();
-        renderExpMenu();
-        render();
-
+        // --- AUTO DETECT BROWSER LANGUAGE ---
         const urlParams = new URLSearchParams(window.location.search);
+        const targetLang = urlParams.get('lang');
+        const browserLang = navigator.language || navigator.userLanguage;
+
+        if (targetLang === 'en' || targetLang === 'th') {
+            state.lang = targetLang;
+        } else if (browserLang && browserLang.toLowerCase().startsWith('en')) {
+            state.lang = 'en'; // Auto-switch to English if their device is English
+        } else {
+            state.lang = 'th';
+        }
+        
+        // Apply the language layout immediately
+        toggleLang(false);
+
         if (urlParams.get('lecturer')) {
             openStandaloneProfile(urlParams.get('lecturer'));
         }
@@ -145,8 +158,16 @@
         document.getElementById('loader-text').innerHTML = `<span class="text-red-600 text-center px-4">Server Error: ${err.message}<br><br><small class="text-slate-500 font-normal">หากเพิ่งอัปเดตโค้ด กรุณาตรวจสอบให้แน่ใจว่าวาง API_URL ถูกต้อง</small></span>`; 
     }
 
+    function toggleLang(switchLang = true) {
+      if(switchLang) state.lang = state.lang === 'th' ? 'en' : 'th';
+      document.getElementById('lang-btn').innerText = state.lang === 'th' ? 'EN' : 'TH';
+      updateStaticUI();
+      renderExpMenu();
+      render();
+    }
+
     function updateStaticUI() {
-      const t = i18n.th;
+      const t = i18n[state.lang];
       document.getElementById('search-input').placeholder = t.searchPlaceholder;
       document.getElementById('btn-filter-all').innerText = t.filterAll;
       document.getElementById('txt-fac-header').innerText = t.facHeader;
@@ -186,7 +207,7 @@
     }
 
     function exportRIS(title, author, year, type, link) {
-      const t = i18n.th;
+      const t = i18n[state.lang];
       const risType = String(type).includes('หนังสือ') ? 'BOOK' : 'JOUR';
       const cleanTitle = title.replace(/'/g, "").replace(/"/g, "");
       const risContent = `TY  - ${risType}\nTI  - ${cleanTitle}\nAU  - ${author}\nPY  - ${year}\nUR  - ${link || ''}\nER  - `;
@@ -206,7 +227,11 @@
 
     function renderExpMenu() {
       const menu = document.getElementById('exp-container');
-      const exps = [...new Set(rawData.faculty.map(f => f['ความเชี่ยวชาญ']).filter(Boolean))].sort();
+      const isEn = state.lang === 'en';
+      const expField = isEn ? 'ความเชี่ยวชาญ (EN)' : 'ความเชี่ยวชาญ';
+      
+      // Filter out empty values and sort
+      const exps = [...new Set(rawData.faculty.map(f => f[expField]).filter(Boolean))].sort();
       menu.innerHTML = exps.map(e => `<button onclick="setExp('${e}')" class="exp-btn bg-white text-slate-500 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition">${e}</button>`).join('');
     }
 
@@ -228,37 +253,59 @@
       document.getElementById('profile-standalone').classList.remove('hidden');
       window.scrollTo(0, 0);
 
-      const t = i18n.th;
+      const t = i18n[state.lang];
+      const isEn = state.lang === 'en';
+      const nameField = isEn ? 'ชื่อ-นามสกุล (EN)' : 'ชื่อ-นามสกุล';
+      const titleField = isEn ? 'ตำแหน่ง (EN)' : 'ตำแหน่ง';
+      const expField = isEn ? 'ความเชี่ยวชาญ (EN)' : 'ความเชี่ยวชาญ';
+      const pubTitleField = isEn ? 'ชื่อเรื่อง (EN)' : 'ชื่อเรื่อง';
+      const authorField = isEn ? 'authorEN' : 'authorTH';
+
       const ownerAuthorTH = (f['ตำแหน่ง'] || '') + f['ชื่อ-นามสกุล'];
       const pubs = rawData.publications.filter(p => String(p['authorTH']).includes(ownerAuthorTH));
 
-      const title = f['ตำแหน่ง'] || '';
-      const dispName = f['ชื่อ-นามสกุล'] || '';
-      const exp = f['ความเชี่ยวชาญ'] || '';
+      const title = f[titleField] || f['ตำแหน่ง'] || '';
+      const dispName = f[nameField] || f['ชื่อ-นามสกุล'] || '';
+      const exp = f[expField] || f['ความเชี่ยวชาญ'] || '';
       const email = f['อีเมล'] || '';
       
-      const educationText = f['ประวัติการศึกษา'] || f['การศึกษา'] || '';
-      const experienceText = f['ประวัติการทำงาน'] || f['ประสบการณ์'] || '';
+      const educationText = isEn ? (f['ประวัติการศึกษา (EN)'] || f['Education'] || '') : (f['ประวัติการศึกษา'] || f['การศึกษา'] || '');
+      const experienceText = isEn ? (f['ประวัติการทำงาน (EN)'] || f['Experience'] || '') : (f['ประวัติการทำงาน'] || f['ประสบการณ์'] || '');
       const cvLink = f['ลิงก์ CV'] || f['CV Link'] || '';
       
+      const cvHeaderText = isEn ? 'Biography & Education' : 'ประวัติและการศึกษา';
+      const eduHeader = isEn ? 'Education' : 'ประวัติการศึกษา';
+      const expHeader = isEn ? 'Experience' : 'ประสบการณ์ทำงาน';
+      const viewCvText = isEn ? 'View Full CV ↗' : 'ดูประวัติฉบับเต็ม (CV) ↗';
+      const noCvText = isEn ? 'Background information not available.' : 'ยังไม่มีข้อมูลประวัติในระบบ';
+
+      const headerText = isEn ? 'Publications' : 'ผลงานวิชาการ';
+      const noPubText = isEn ? 'No publications found.' : 'ไม่พบผลงานวิชาการ';
+      const backText = isEn ? '← Back to Directory' : '← กลับสู่หน้าทำเนียบ';
+
       document.title = `${title} ${dispName} | ทำเนียบผู้เชี่ยวชาญ นิติศาสตร์ MFU`;
 
       let cvHtml = '';
       if (educationText || experienceText || (cvLink && cvLink.trim() !== '')) {
-          if (educationText) cvHtml += `<div class="mb-5"><h3 class="font-bold text-slate-800 text-base mb-2 flex items-center gap-2">🎓 ประวัติการศึกษา</h3><p class="whitespace-pre-wrap text-slate-600 text-sm pl-7 leading-relaxed">${educationText}</p></div>`;
-          if (experienceText) cvHtml += `<div class="mb-5"><h3 class="font-bold text-slate-800 text-base mb-2 flex items-center gap-2">💼 ประสบการณ์ทำงาน</h3><p class="whitespace-pre-wrap text-slate-600 text-sm pl-7 leading-relaxed">${experienceText}</p></div>`;
+          if (educationText) cvHtml += `<div class="mb-5"><h3 class="font-bold text-slate-800 text-base mb-2 flex items-center gap-2">🎓 ${eduHeader}</h3><p class="whitespace-pre-wrap text-slate-600 text-sm pl-7 leading-relaxed">${educationText}</p></div>`;
+          if (experienceText) cvHtml += `<div class="mb-5"><h3 class="font-bold text-slate-800 text-base mb-2 flex items-center gap-2">💼 ${expHeader}</h3><p class="whitespace-pre-wrap text-slate-600 text-sm pl-7 leading-relaxed">${experienceText}</p></div>`;
           if (cvLink && cvLink.trim() !== '') {
-              cvHtml += `<div class="flex pt-4"><a href="${cvLink}" target="_blank" class="bg-[#b91c1c] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-red-800 transition shadow-md flex items-center gap-2 text-sm">📄 ดูประวัติฉบับเต็ม (CV) ↗</a></div>`;
+              cvHtml += `<div class="flex pt-4"><a href="${cvLink}" target="_blank" class="bg-[#b91c1c] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-red-800 transition shadow-md flex items-center gap-2 text-sm">📄 ${viewCvText}</a></div>`;
           }
       } else {
-          cvHtml = `<p class="text-slate-400 italic text-sm text-center py-4">ยังไม่มีข้อมูลประวัติในระบบ</p>`;
+          cvHtml = `<p class="text-slate-400 italic text-sm text-center py-4">${noCvText}</p>`;
       }
 
       let html = `
       <div class="p-6 md:p-10 max-w-4xl mx-auto">
-        <button onclick="closeStandaloneProfile()" class="inline-block mb-6 text-sm bg-slate-900 text-white px-5 py-2 rounded-lg hover:bg-slate-800 transition shadow-md">
-           ← กลับสู่หน้าทำเนียบ
-        </button>
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="closeStandaloneProfile()" class="inline-block text-sm bg-slate-900 text-white px-5 py-2 rounded-lg hover:bg-slate-800 transition shadow-md">
+               ${backText}
+            </button>
+            <button onclick="toggleLang(); openStandaloneProfile('${name.replace(/'/g, "\\'")}')" class="bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 transition shadow-sm flex items-center gap-2">
+               🌐 ${state.lang === 'th' ? 'English' : 'ภาษาไทย'}
+            </button>
+        </div>
         
         <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row gap-8 items-center md:items-start">
           ${f['Instructor Image'] ? `<img src="${f['Instructor Image']}" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow-md border-4 border-white shrink-0">` : `<div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-300 text-4xl shadow-md border-4 border-white shrink-0">${String(dispName)[0]}</div>`}
@@ -272,14 +319,14 @@
         </div>
 
         <h2 class="text-xl font-bold mb-6 text-slate-900 uppercase border-b-2 border-slate-900 pb-2">
-          ประวัติและการศึกษา
+          ${cvHeaderText}
         </h2>
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 mb-10">
           ${cvHtml}
         </div>
 
         <h2 class="text-xl font-bold mb-6 text-slate-900 uppercase border-b-2 border-slate-900 pb-2 flex items-center justify-between">
-          ผลงานวิชาการ <span class="bg-slate-100 text-slate-500 text-xs px-3 py-1 rounded-full">${pubs.length}</span>
+          ${headerText} <span class="bg-slate-100 text-slate-500 text-xs px-3 py-1 rounded-full">${pubs.length}</span>
         </h2>
         
         <div class="space-y-4">
@@ -287,32 +334,34 @@
 
       if(pubs.length > 0) {
           pubs.forEach(p => {
-              const citeText = `${p['authorTH']}. (${p['ปีที่เผยแพร่']}). ${p['ชื่อเรื่อง']}. [${p['ประเภท']}].`;
+              const titleStr = p[pubTitleField] || p['ชื่อเรื่อง']; // Fallback to Thai if EN is missing
+              const authorStr = p[authorField] || p['authorTH'];
+              const citeText = `${authorStr}. (${p['ปีที่เผยแพร่']}). ${titleStr}. [${p['ประเภท']}].`;
               
               html += `
               <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-slate-300 transition relative">
-                <h3 class="font-bold text-slate-900 text-lg">${p['ชื่อเรื่อง']}</h3>
+                <h3 class="font-bold text-slate-900 text-lg">${titleStr}</h3>
                 <div class="flex flex-wrap gap-2 text-xs font-bold text-slate-400 mt-3 items-center">
-                  <span class="text-[#b91c1c] bg-red-50 px-2 py-1 rounded">ปี ${p['ปีที่เผยแพร่']}</span>
+                  <span class="text-[#b91c1c] bg-red-50 px-2 py-1 rounded">YEAR ${p['ปีที่เผยแพร่']}</span>
                   <span class="w-1 h-1 bg-slate-200 rounded-full"></span>
-                  <span class="text-slate-600">${p['authorTH']}</span>
+                  <span class="text-slate-600">${authorStr}</span>
                 </div>
                 
                 <div class="mt-4 pt-4 border-t border-slate-50 flex flex-wrap gap-4 items-center">
                     <button onclick="copy(\`${citeText.replace(/'/g, "\\'").replace(/"/g, "&quot;")}\`, '${t.copyRef}')" class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-900">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                      อ้างอิง (CITE)
+                      ${t.citeLabel}
                     </button>
-                    <button onclick="exportRIS(\`${p['ชื่อเรื่อง'].replace(/'/g, "\\'")}\`, \`${p['authorTH']}\`, '${p['ปีที่เผยแพร่']}', '${p['ประเภท']}', '${p['ลิงก์'] || ''}')" class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-[#b91c1c]">
+                    <button onclick="exportRIS(\`${titleStr.replace(/'/g, "\\'")}\`, \`${authorStr}\`, '${p['ปีที่เผยแพร่']}', '${p['ประเภท']}', '${p['ลิงก์'] || ''}')" class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-[#b91c1c]">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                      ส่งออก .RIS
+                      ${t.exportLabel}
                     </button>
-                    ${p['ลิงก์'] ? `<a href="${p['ลิงก์']}" target="_blank" class="ml-auto text-[#b91c1c] text-[10px] font-black bg-red-50 px-3 py-1.5 rounded-full hover:bg-red-100 transition">FULL WORK ↗</a>` : ''}
+                    ${p['ลิงก์'] ? `<a href="${p['ลิงก์']}" target="_blank" class="ml-auto text-[#b91c1c] text-[10px] font-black bg-red-50 px-3 py-1.5 rounded-full hover:bg-red-100 transition">${t.fullWork}</a>` : ''}
                 </div>
               </div>`;
           });
       } else {
-          html += `<p class="text-slate-400 text-center py-10 font-medium">ไม่พบผลงานวิชาการ</p>`;
+          html += `<p class="text-slate-400 text-center py-10 font-medium">${noPubText}</p>`;
       }
 
       html += `</div></div>`;
@@ -330,26 +379,36 @@
     }
 
     function render() {
-      const t = i18n.th;
+      const t = i18n[state.lang];
+      const isEn = state.lang === 'en';
       const s = state.search.toLowerCase();
+      
+      const nameField = isEn ? 'ชื่อ-นามสกุล (EN)' : 'ชื่อ-นามสกุล';
+      const titleField = isEn ? 'ตำแหน่ง (EN)' : 'ตำแหน่ง';
+      const expField = isEn ? 'ความเชี่ยวชาญ (EN)' : 'ความเชี่ยวชาญ';
+      const pubTitleField = isEn ? 'ชื่อเรื่อง (EN)' : 'ชื่อเรื่อง';
+      const authorField = isEn ? 'authorEN' : 'authorTH';
 
       const filteredFac = rawData.faculty.filter(f => {
-        const mExp = state.exp === 'all' || f['ความเชี่ยวชาญ'] === state.exp;
-        const mSearch = String(f['ชื่อ-นามสกุล']).toLowerCase().includes(s) || String(f['ความเชี่ยวชาญ']).toLowerCase().includes(s);
+        const mExp = state.exp === 'all' || f[expField] === state.exp || f['ความเชี่ยวชาญ'] === state.exp;
+        const mSearch = String(f[nameField]).toLowerCase().includes(s) || String(f[expField]).toLowerCase().includes(s) || String(f['ชื่อ-นามสกุล']).toLowerCase().includes(s);
         return mExp && mSearch;
       });
 
       document.getElementById('fac-list').innerHTML = filteredFac.map(f => {
         const active = state.selectedFac === f['ชื่อ-นามสกุล'] ? 'fac-active' : ''; 
-        const img = f['Instructor Image'] ? `<img src="${f['Instructor Image']}" class="smart-avatar w-14 h-14 rounded-2xl shadow-sm">` : `<div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center font-bold text-slate-300 shadow-sm">${String(f['ชื่อ-นามสกุล'])[0]}</div>`;
+        const dispName = f[nameField] || f['ชื่อ-นามสกุล'] || '';
+        const dispTitle = f[titleField] || f['ตำแหน่ง'] || '';
+        const dispExp = f[expField] || f['ความเชี่ยวชาญ'] || '';
+        const img = f['Instructor Image'] ? `<img src="${f['Instructor Image']}" class="smart-avatar w-14 h-14 rounded-2xl shadow-sm">` : `<div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center font-bold text-slate-300 shadow-sm">${String(dispName)[0]}</div>`;
 
         return `
           <div class="clean-card p-4 cursor-pointer ${active}" onclick="selectFac('${f['ชื่อ-นามสกุล']}')">
             <div class="flex items-center gap-4">
               ${img}
               <div class="flex-1 min-w-0">
-                <a href="?lecturer=${encodeURIComponent(f['ชื่อ-นามสกุล'])}" class="font-bold text-sm text-slate-900 truncate hover:text-[#b91c1c] hover:underline block" onclick="event.preventDefault(); event.stopPropagation(); openStandaloneProfile('${f['ชื่อ-นามสกุล']}');" title="ดูข้อมูลเพิ่มเติม">${hl((f['ตำแหน่ง'] || "") + " " + f['ชื่อ-นามสกุล'], state.search)}</a>
-                <p class="text-[#d97706] text-[10px] font-bold uppercase mt-1">${f['ความเชี่ยวชาญ']}</p>
+                <a href="?lecturer=${encodeURIComponent(f['ชื่อ-นามสกุล'])}&lang=${state.lang}" class="font-bold text-sm text-slate-900 truncate hover:text-[#b91c1c] hover:underline block" onclick="event.preventDefault(); event.stopPropagation(); openStandaloneProfile('${f['ชื่อ-นามสกุล']}');" title="${isEn ? 'View Full Profile' : 'ดูข้อมูลเพิ่มเติม'}">${hl(dispTitle + " " + dispName, state.search)}</a>
+                <p class="text-[#d97706] text-[10px] font-bold uppercase mt-1">${dispExp}</p>
               </div>
             </div>
             <div class="flex gap-2 mt-3 pt-3 border-t border-slate-50" onclick="event.stopPropagation()">
@@ -359,7 +418,7 @@
       }).join('') || `<p class="text-center text-slate-400 text-xs py-10">${t.notFoundFac}</p>`;
 
       const filteredPub = rawData.publications.filter(p => {
-        const mSearch = String(p['ชื่อเรื่อง']).toLowerCase().includes(s) || String(p['authorTH']).toLowerCase().includes(s);
+        const mSearch = String(p[pubTitleField] || p['ชื่อเรื่อง']).toLowerCase().includes(s) || String(p[authorField] || p['authorTH']).toLowerCase().includes(s);
         const owner = rawData.faculty.find(f => f['ชื่อ-นามสกุล'] === state.selectedFac);
         const ownerAuthorTH = owner ? (owner['ตำแหน่ง'] || '') + owner['ชื่อ-นามสกุล'] : null;
         const mFac = !state.selectedFac || String(p['authorTH']).includes(ownerAuthorTH);
@@ -367,14 +426,14 @@
       });
 
       document.getElementById('pub-list').innerHTML = filteredPub.slice(0, state.limit).map(p => {
-        const titleStr = p['ชื่อเรื่อง'];
-        const authorStr = p['authorTH'];
+        const titleStr = p[pubTitleField] || p['ชื่อเรื่อง']; // Fallback to Thai if EN missing
+        const authorStr = p[authorField] || p['authorTH'];
         const citeText = `${authorStr}. (${p['ปีที่เผยแพร่']}). ${titleStr}. [${p['ประเภท']}].`;
         const googleLink = `https://www.google.com/search?q=${encodeURIComponent(titleStr + ' ' + authorStr)}`;
         
         const actionBtn = (p['ลิงก์'] && p['ลิงก์'].trim() !== '') 
-          ? `<a href="${p['ลิงก์']}" target="_blank" class="shrink-0 text-[#b91c1c] font-black text-[10px] bg-red-50 px-4 py-2 rounded-full border border-red-100 hover:bg-red-100">FULL WORK ↗</a>`
-          : `<a href="${googleLink}" target="_blank" class="shrink-0 text-slate-400 font-bold text-[10px] bg-slate-50 px-4 py-2 rounded-full border border-slate-200 hover:bg-slate-100">สืบค้นเพิ่มเติม 🔍</a>`;
+          ? `<a href="${p['ลิงก์']}" target="_blank" class="shrink-0 text-[#b91c1c] font-black text-[10px] bg-red-50 px-4 py-2 rounded-full border border-red-100 hover:bg-red-100">${t.fullWork}</a>`
+          : `<a href="${googleLink}" target="_blank" class="shrink-0 text-slate-400 font-bold text-[10px] bg-slate-50 px-4 py-2 rounded-full border border-slate-200 hover:bg-slate-100">${t.searchMore}</a>`;
 
         return `
           <div class="clean-card p-6 md:p-8">
@@ -383,18 +442,18 @@
               ${actionBtn}
             </div>
             <div class="flex flex-wrap gap-2 text-[10px] font-bold text-slate-400 mb-4 items-center">
-              <span class="text-[#b91c1c] bg-red-50 px-2 py-0.5 rounded">ปี ${p['ปีที่เผยแพร่']}</span>
+              <span class="text-[#b91c1c] bg-red-50 px-2 py-0.5 rounded">${t.year} ${p['ปีที่เผยแพร่']}</span>
               <span class="w-1 h-1 bg-slate-200 rounded-full"></span>
               <span class="text-slate-600">${hl(authorStr, state.search)}</span>
             </div>
             <div class="pt-4 border-t border-slate-50 flex flex-wrap gap-4">
               <button onclick="copy(\`${citeText.replace(/'/g, "\\'").replace(/"/g, "&quot;")}\`, '${t.copyRef}')" class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-900">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                อ้างอิง (CITE)
+                ${t.citeLabel}
               </button>
               <button onclick="exportRIS(\`${titleStr.replace(/'/g, "\\'")}\`, \`${authorStr}\`, '${p['ปีที่เผยแพร่']}', '${p['ประเภท']}', '${p['ลิงก์'] || ''}')" class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-[#b91c1c]">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                ส่งออก .RIS
+                ${t.exportLabel}
               </button>
             </div>
           </div>`;
@@ -404,27 +463,14 @@
       document.getElementById('fac-count').innerText = filteredFac.length;
       document.getElementById('reset-btn').style.display = state.selectedFac ? 'block' : 'none';
       
-      const displayNameForHeader = state.selectedFac;
-      document.getElementById('pub-header').innerHTML = state.selectedFac ? `ผลงานโดย <span class="mfu-red">${displayNameForHeader}</span>` : t.pubHeaderAll;
+      const displayNameForHeader = isEn && state.selectedFac ? (rawData.faculty.find(f => f['ชื่อ-นามสกุล'] === state.selectedFac)[nameField] || state.selectedFac) : state.selectedFac;
+      document.getElementById('pub-header').innerHTML = state.selectedFac ? `${t.pubHeaderFac} <span class="mfu-red">${displayNameForHeader}</span>` : t.pubHeaderAll;
       
       document.querySelectorAll('.exp-btn').forEach(btn => {
-        const active = btn.innerText === state.exp || (state.exp === 'all' && btn.innerText === i18n.th.filterAll);
+        const active = btn.innerText === state.exp || (state.exp === 'all' && (btn.innerText === i18n.th.filterAll || btn.innerText === i18n.en.filterAll));
         btn.className = active ? "exp-btn bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md" : "exp-btn bg-white text-slate-500 border border-slate-200 px-5 py-2 rounded-xl text-xs font-bold";
       });
     }
   </script>
-
-  <script type="text/javascript">
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({
-        pageLanguage: 'th',
-        includedLanguages: 'en,th',
-        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-        autoDisplay: false
-      }, 'google_translate_element');
-    }
-  </script>
-  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
 </body>
 </html>
