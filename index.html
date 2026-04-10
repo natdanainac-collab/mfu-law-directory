@@ -299,9 +299,14 @@
 
       let html = `
       <div class="p-6 md:p-10 max-w-4xl mx-auto">
-        <button onclick="closeStandaloneProfile()" class="inline-block mb-6 text-sm bg-slate-900 text-white px-5 py-2 rounded-lg hover:bg-slate-800 transition shadow-md">
-           ${backText}
-        </button>
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="closeStandaloneProfile()" class="inline-block text-sm bg-slate-900 text-white px-5 py-2 rounded-lg hover:bg-slate-800 transition shadow-md">
+               ${backText}
+            </button>
+            <button onclick="toggleLang(); openStandaloneProfile('${name.replace(/'/g, "\\'")}')" class="bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 transition shadow-sm flex items-center gap-2">
+               🌐 ${state.lang === 'th' ? 'English' : 'ภาษาไทย'}
+            </button>
+        </div>
         
         <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row gap-8 items-center md:items-start">
           ${f['Instructor Image'] ? `<img src="${f['Instructor Image']}" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow-md border-4 border-white shrink-0">` : `<div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-300 text-4xl shadow-md border-4 border-white shrink-0">${String(dispName)[0]}</div>`}
