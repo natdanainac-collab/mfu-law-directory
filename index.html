@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ทำเนียบผู้เชี่ยวชาญ | นิติศาสตร์ มหาวิทยาลัยแม่ฟ้าหลวง</title>
+  <title>Faculty Directory | MFU School of Law</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
@@ -34,12 +34,12 @@
   </div>
 
   <header id="main-header" class="bg-slate-950 text-white py-16 md:py-20 border-b-4 border-[#b91c1c] text-center px-6 relative overflow-hidden hidden">
-    <button onclick="toggleLang()" id="lang-btn" class="absolute top-6 right-6 z-20 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition backdrop-blur-sm border border-white/10 shadow-lg">EN</button>
+    <button onclick="toggleLang()" id="lang-btn" class="absolute top-6 right-6 z-20 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition backdrop-blur-sm border border-white/10 shadow-lg">TH</button>
     <div class="relative z-10 mt-4 md:mt-0">
       <h2 class="text-[#d97706] font-black tracking-widest text-xs uppercase mb-3">MFU School of Law</h2>
       <h1 class="text-3xl md:text-5xl font-black mb-8">Faculty & Research Portal</h1>
       <div class="max-w-2xl mx-auto relative group">
-        <input type="text" id="search-input" onkeyup="handleSearch(this.value)" placeholder="ค้นหาชื่ออาจารย์ หรือชื่องานวิจัย..." 
+        <input type="text" id="search-input" onkeyup="handleSearch(this.value)" placeholder="Search for faculty or publications..." 
           class="w-full py-4 pl-12 pr-6 rounded-2xl bg-white/10 text-white placeholder-slate-500 border border-white/10 focus:bg-white focus:text-slate-900 outline-none transition-all shadow-xl">
         <span class="absolute left-4 top-3.5 text-slate-400 text-xl">🔍</span>
       </div>
@@ -48,28 +48,28 @@
 
   <main id="main-ui" class="max-w-7xl mx-auto px-6 mt-10 hidden">
     <div class="flex flex-wrap gap-2 mb-10 pb-6 border-b border-slate-200" id="filter-area">
-      <button onclick="setExp('all')" id="btn-filter-all" class="exp-btn bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold transition shadow-md">ทั้งหมด</button>
+      <button onclick="setExp('all')" id="btn-filter-all" class="exp-btn bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold transition shadow-md">All</button>
       <div id="exp-container" class="flex flex-wrap gap-2"></div>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-10 items-start">
       <div class="w-full lg:w-1/3 lg:sticky lg:top-8">
         <h3 class="font-bold text-lg text-slate-800 mb-5 flex justify-between items-center">
-          <span id="txt-fac-header">ทำเนียบผู้เชี่ยวชาญ</span> <span id="fac-count" class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-400">0</span>
+          <span id="txt-fac-header">Faculty Directory</span> <span id="fac-count" class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-400">0</span>
         </h3>
         <div id="fac-list" class="grid grid-cols-1 gap-4 lg:max-h-[70vh] lg:overflow-y-auto pr-2 no-scrollbar"></div>
       </div>
 
       <div class="w-full lg:w-2/3" id="pub-section-anchor">
         <div class="flex justify-between items-center border-b-2 border-slate-900 pb-3 mb-6">
-          <h3 id="pub-header" class="font-bold text-xl text-slate-900 uppercase tracking-tight">ผลงานวิชาการล่าสุด</h3>
-          <button onclick="selectFac(null)" id="reset-btn" class="hidden text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">ดูทั้งหมด ✕</button>
+          <h3 id="pub-header" class="font-bold text-xl text-slate-900 uppercase tracking-tight">Latest Publications</h3>
+          <button onclick="selectFac(null)" id="reset-btn" class="hidden text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">View All ✕</button>
         </div>
         <div id="pub-list" class="space-y-5"></div>
         
         <div id="load-more-container" class="text-center mt-8 hidden">
           <button onclick="loadMore()" id="btn-load-more" class="bg-slate-100 text-slate-600 px-6 py-2 rounded-full text-xs font-bold hover:bg-slate-200 transition border border-slate-200 shadow-sm">
-            โหลดผลงานเพิ่มเติม ▾
+            Load More ▾
           </button>
         </div>
       </div>
@@ -100,7 +100,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzvs1BjsYI2WESkRH3913v19Xw11QDHg4La3B3hMTnOFirJ3ow4dvAD1NmGDSyH2ZLa/exec"; 
 
     let rawData = { faculty: [], publications: [] };
-    let state = { search: '', exp: 'all', selectedFac: null, limit: 15, lang: 'th' };
+    let state = { search: '', exp: 'all', selectedFac: null, limit: 15, lang: 'en' };
 
     window.onload = () => {
       // ดึงข้อมูลผ่าน fetch() แทน google.script.run
@@ -127,10 +127,7 @@
         
         document.getElementById('main-header').classList.remove('hidden');
         document.getElementById('main-ui').classList.remove('hidden');
-        updateStaticUI();
-        renderExpMenu();
-        render();
-
+        
         // ใช้งาน Standard Web Router และ Auto Translate
         const urlParams = new URLSearchParams(window.location.search);
         const targetLang = urlParams.get('lang');
@@ -138,11 +135,13 @@
 
         if(targetLang === 'en' || targetLang === 'th') {
             state.lang = targetLang;
-            toggleLang(false); // อัปเดตภาษาตาม URL โดยไม่ต้องสลับไปมา
-        } else if (browserLang && browserLang.toLowerCase().startsWith('en')) {
-            state.lang = 'en';
-            toggleLang(false); // Auto-translate to English based on browser language
+        } else if (browserLang && browserLang.toLowerCase().startsWith('th')) {
+            state.lang = 'th'; // Auto-translate to Thai only if browser is Thai
+        } else {
+            state.lang = 'en'; // Default to English for everyone else
         }
+
+        toggleLang(false); // Apply the initial language without switching
 
         if (urlParams.get('lecturer')) {
             openStandaloneProfile(urlParams.get('lecturer'));
@@ -284,7 +283,7 @@
       const backText = isEn ? '← Back to Directory' : '← กลับสู่หน้าทำเนียบ';
 
       // SEO: ให้ Googlebot และเบราว์เซอร์รู้ว่าหน้านี้คือโปรไฟล์ของใคร
-      document.title = `${title} ${dispName} | ทำเนียบผู้เชี่ยวชาญ นิติศาสตร์ MFU`;
+      document.title = `${title} ${dispName} | Faculty Directory MFU Law`;
 
       let cvHtml = '';
       if (educationText || experienceText || (cvLink && cvLink.trim() !== '')) {
@@ -374,7 +373,7 @@
     function closeStandaloneProfile() {
       updateUrlParameter(null);
       // SEO: คืนค่าแท็บด้านบนให้กลับมาเป็นชื่อทำเนียบผู้เชี่ยวชาญ
-      document.title = 'ทำเนียบผู้เชี่ยวชาญ | นิติศาสตร์ มหาวิทยาลัยแม่ฟ้าหลวง';
+      document.title = 'Faculty Directory | MFU School of Law';
       document.getElementById('profile-standalone').classList.add('hidden');
       document.getElementById('main-header').classList.remove('hidden');
       document.getElementById('main-ui').classList.remove('hidden');
